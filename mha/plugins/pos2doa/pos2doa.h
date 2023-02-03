@@ -32,6 +32,10 @@
 #ifndef POS2DOA_H
 #define POS2DOA_H
 
+#define DEG2RAD M_PI/180.0
+#define RAD2DEG 180.0/M_PI
+
+
 // class pos2doa_config {
 
 // public:

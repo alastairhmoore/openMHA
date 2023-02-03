@@ -66,7 +66,9 @@ void pos2doa_t::prepare(mhaconfig_t & signal_info)
 void pos2doa_t::process()
 {
     /* Do stuff here */
-    az_deg = 22.0; // hard code value for now just for testing
+    const std::vector<float> pos = MHA_AC::get_var_vfloat(ac, ac_name_pos_in);
+    az_deg = RAD2DEG * atan2f(pos[1], pos[0]);
+
 
     /* directly calculate mapping
      * TODO: use lookup table
@@ -78,7 +80,7 @@ void pos2doa_t::process()
         az_deg_ += 360;
     // az_deg_ = round(az_deg_); // this gives integer version which could be used for LUT
     steer_index = i_of_0 + round(az_deg_ / 5);
-    if (steer_index > nangles)
+    if (steer_index >= nangles)
         steer_index -= nangles;
 
     /* write the value to the required ac variable */
