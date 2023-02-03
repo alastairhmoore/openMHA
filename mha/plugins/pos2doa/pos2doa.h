@@ -88,7 +88,8 @@ private:
 
     /* Azimuth of object (propagated to AC handle): */
     float az_deg;
-    int steer_index;
+    // int steer_index;
+    MHA_AC::float_t steer_index;
 };
 
 #endif // POS2DOA_H

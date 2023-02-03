@@ -23,14 +23,15 @@
  * 
  */
 pos2doa_t::pos2doa_t(MHA_AC::algo_comm_t & iac, const std::string & configured_name)
-    : MHAPlugin::plugin_t<int>("pos2doa manipulates ac variables",iac)
+    : MHAPlugin::plugin_t<int>("pos2doa manipulates ac variables",iac),
+    steer_index(ac, "acSteerIndex", 36, true)
 {
     /* iac is passed to the base class where it is assiged to the member variable ac */
     (void)configured_name;/* ignore 2nd parameter */
 
     ac_name_pos_in = "acSteerPos";
     ac_name_az_deg_out = "acSteerAzDeg";
-    ac_name_steerbf_index_out = "acSteerIndex";
+    // ac_name_steerbf_index_out = "acSteerIndex";
 
     // chaging these requires a new configuration
     // INSERT_PATCH(variable_name);
@@ -40,7 +41,7 @@ pos2doa_t::pos2doa_t(MHA_AC::algo_comm_t & iac, const std::string & configured_n
     // insert_member(angle_src);
     
     ac.insert_var_float(ac_name_az_deg_out, &az_deg);
-    ac.insert_var_int(ac_name_steerbf_index_out, &steer_index);
+    // ac.insert_var_int(ac_name_steerbf_index_out, &steer_index);
 
 }
 
@@ -79,13 +80,15 @@ void pos2doa_t::process()
     if (az_deg_ < 0)
         az_deg_ += 360;
     // az_deg_ = round(az_deg_); // this gives integer version which could be used for LUT
-    steer_index = i_of_0 + round(az_deg_ / 5);
-    if (steer_index >= nangles)
-        steer_index -= nangles;
+    int steer_index_ = i_of_0 + round(az_deg_ / 5);
+    if (steer_index_ >= nangles)
+        steer_index_ -= nangles;
 
     /* write the value to the required ac variable */
     ac.insert_var_float(ac_name_az_deg_out, &az_deg);
-    ac.insert_var_int(ac_name_steerbf_index_out, &steer_index);
+    //ac.insert_var_int(ac_name_steerbf_index_out, &steer_index);
+    steer_index.data = (float) steer_index_;
+    steer_index.insert();
 }
 
 
