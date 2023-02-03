@@ -26,18 +26,39 @@
  */
 
 #include "mha_plugin.hh"
+#include <math.h>
 
 
 #ifndef POS2DOA_H
 #define POS2DOA_H
 
-#include "mha_plugin.hh"
+// class pos2doa_config {
+
+// public:
+//     pos2doa_config(MHA_AC::algo_comm_t & ac,
+//                    const mhaconfig_t in_cfg,
+//                    pos2doa_t *pos2doa_t);
+//     ~pos2doa_config();
+//     mha_spec_t* process(mha_spec_t*);
+
+// private:
+//     unsigned int nchan;
+//     unsigned int nfreq;
+//     MHASignal::spectrum_t outSpec;
+//     mha_spec_t bf_vec;
+//     unsigned int nangle;
+//     steerbf *_steerbf;
+//     MHA_AC::algo_comm_t & ac;
+//     std::string bf_src_copy;
+// };
+
 
 
 class pos2doa_t : public MHAPlugin::plugin_t<int> {
+
 public:
     pos2doa_t(MHA_AC::algo_comm_t & iac, const std::string & configured_name);
-    // ~pos2doa_t();
+    ~pos2doa_t();
     void prepare(mhaconfig_t&);
     void release(void) {/* Do nothing in release */}
 
@@ -45,8 +66,25 @@ public:
     mha_wave_t* process(mha_wave_t* s){process(); return s;}; 
     mha_spec_t* process(mha_spec_t* s){process(); return s;}; 
 
+    //declare MHAParser variables here
+    std::string ac_name_pos_in;
+    std::string ac_name_az_deg_out;
+    std::string ac_name_steerbf_index_out;
+
+    // MHAParser::string_t ac_name_pos_in;   // the string itself is obtained from ac_name_pos_in.data
+    // MHAParser::string_t az_name_az_deg_out;
+    
 private:
     void process(); // implementation of ac processing will go in here
+    void update_cfg();
+
+    /* patch bay for connecting configuration parser
+       events with local member functions: */
+    // MHAEvents::patchbay_t<pos2doa_t> patchbay;
+
+    /* Azimuth of object (propagated to AC handle): */
+    float az_deg;
+    int steer_index;
 };
 
 #endif // POS2DOA_H

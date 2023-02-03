@@ -16,17 +16,36 @@
 
 #include "pos2doa.h"
 
-/** Do-nothing constructor.  The constructor has to take these two
- * arguments, but it does not have to use them.  The base
- * class has to be initialized.
- * More advanced plugins use a custom configuration class for the template MHAPlugin::plugin_t
+// #define PATCH_VAR(var) patchbay.connect(&var.valuechanged, this, &acSteer::update_cfg)
+// #define INSERT_PATCH(var) insert_member(var); PATCH_VAR(var)
+
+/** Construct the plugin
+ * 
  */
 pos2doa_t::pos2doa_t(MHA_AC::algo_comm_t & iac, const std::string & configured_name)
     : MHAPlugin::plugin_t<int>("pos2doa manipulates ac variables",iac)
 {
     /* iac is passed to the base class where it is assiged to the member variable ac */
     (void)configured_name;/* ignore 2nd parameter */
+
+    ac_name_pos_in = "acSteerPos";
+    ac_name_az_deg_out = "acSteerAzDeg";
+    ac_name_steerbf_index_out = "acSteerIndex";
+
+    // chaging these requires a new configuration
+    // INSERT_PATCH(variable_name);
+
+    //changing these does not require a configuration change
+    // insert_member(angle_ind);
+    // insert_member(angle_src);
+    
+    ac.insert_var_float(ac_name_az_deg_out, &az_deg);
+    ac.insert_var_int(ac_name_steerbf_index_out, &steer_index);
+
 }
+
+/** Deconstructor */
+pos2doa_t::~pos2doa_t(){}
 
 /** Plugin preparation.
  * 
@@ -46,7 +65,25 @@ void pos2doa_t::prepare(mhaconfig_t & signal_info)
  */
 void pos2doa_t::process()
 {
-    /* Do stuff here */    
+    /* Do stuff here */
+    az_deg = 22.0; // hard code value for now just for testing
+
+    /* directly calculate mapping
+     * TODO: use lookup table
+     */
+    int i_of_0 = 36;
+    int nangles = 72; // our actual steerbf weights have 73 entries becasue it includes ±180 degrees
+    float az_deg_ = fmod(az_deg, 360);
+    if (az_deg_ < 0)
+        az_deg_ += 360;
+    // az_deg_ = round(az_deg_); // this gives integer version which could be used for LUT
+    steer_index = i_of_0 + round(az_deg_ / 5);
+    if (steer_index > nangles)
+        steer_index -= nangles;
+
+    /* write the value to the required ac variable */
+    ac.insert_var_float(ac_name_az_deg_out, &az_deg);
+    ac.insert_var_int(ac_name_steerbf_index_out, &steer_index);
 }
 
 
