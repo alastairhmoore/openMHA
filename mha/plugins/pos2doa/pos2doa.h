@@ -72,6 +72,7 @@ public:
 
     //declare MHAParser variables here
     std::string ac_name_pos_in;
+    std::string ac_name_rot_in;
     std::string ac_name_az_deg_out;
     std::string ac_name_steerbf_index_out;
 

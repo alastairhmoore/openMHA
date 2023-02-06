@@ -30,6 +30,7 @@ pos2doa_t::pos2doa_t(MHA_AC::algo_comm_t & iac, const std::string & configured_n
     (void)configured_name;/* ignore 2nd parameter */
 
     ac_name_pos_in = "acSteerPos";
+    ac_name_rot_in = "acHeadRot";
     ac_name_az_deg_out = "acSteerAzDeg";
     // ac_name_steerbf_index_out = "acSteerIndex";
 
@@ -67,8 +68,55 @@ void pos2doa_t::prepare(mhaconfig_t & signal_info)
 void pos2doa_t::process()
 {
     /* Do stuff here */
+    // assuming receiver is at origin, get the doa as a cartesian vector
     const std::vector<float> pos = MHA_AC::get_var_vfloat(ac, ac_name_pos_in);
-    az_deg = RAD2DEG * atan2f(pos[1], pos[0]);
+    double x = pos[0];
+    double y = pos[1];
+    double z = pos[2];
+
+
+    // get rotation of head in TASCAR Euler coordinates (applied in sequence)
+    // rotZ, rotY, rotX
+    const std::vector<float> rot = MHA_AC::get_var_vfloat(ac, ac_name_rot_in);
+
+    // apply inverse rotation to target vector (code from TASCAR coordinates.h)
+    // -rotX, -rotY, -rotZ
+    // rotX
+    double a = DEG2RAD * -rot[2];
+    if(a != 0) {
+        // 1   0    0
+        // 0  cos -sin
+        // 0  sin  cos
+        double zn = cos(a) * z + sin(a) * y;
+        double yn = cos(a) * y - sin(a) * z;
+        z = zn;
+        y = yn;
+    }
+    // rotY
+    a = DEG2RAD * -rot[1];
+    if(a != 0) {
+        //  cos 0  sin
+        //   0  1   0
+        // -sin 0  cos
+        double xn = cos(a) * x + sin(a) * z;
+        double zn = cos(a) * z - sin(a) * x;
+        z = zn;
+        x = xn;
+    }
+    // rotZ
+    a = DEG2RAD * -rot[0];
+    if(a != 0) {
+        // cos -sin  0
+        // sin  cos  0
+        //  0    0   1
+        double xn = cos(a) * x - sin(a) * y;
+        double yn = cos(a) * y + sin(a) * x;
+        x = xn;
+        y = yn;
+    }
+
+    // convert doa to spherical coordinates
+    az_deg = RAD2DEG * atan2f(y, x);
 
 
     /* directly calculate mapping
